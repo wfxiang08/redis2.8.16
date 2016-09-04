@@ -723,6 +723,7 @@ struct redisServer {
     long long repl_backlog_idx;     /* Backlog circular buffer current offset */
     long long repl_backlog_off;     /* Replication offset of first byte in the
                                        backlog buffer. */
+    // 如果没有SLAVE, backlog如何处理呢? 可以考虑设置为无穷大
     time_t repl_backlog_time_limit; /* Time without slaves after the backlog
                                        gets released. */
     time_t repl_no_slaves_since;    /* We have no slaves since that time.

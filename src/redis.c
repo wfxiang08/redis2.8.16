@@ -2492,10 +2492,11 @@ sds genRedisInfoString(char *section) {
             "connected_clients:%lu\r\n"
             "client_longest_output_list:%lu\r\n"
             "client_biggest_input_buf:%lu\r\n"
-            "blocked_clients:%d\r\n",
-            listLength(server.clients)-listLength(server.slaves),
+            "blocked_clients:%d\r\n", listLength(server.clients)-listLength(server.slaves),
             lol, bib,
             server.bpop_blocked_clients);
+        
+        // clients 和 slaves的区别？
     }
 
     /* Memory */
@@ -2753,6 +2754,7 @@ sds genRedisInfoString(char *section) {
                 if (slave->replstate == REDIS_REPL_ONLINE)
                     lag = time(NULL) - slave->repl_ack_time;
 
+                // SLAVE确定的OFFSET
                 info = sdscatprintf(info,
                     "slave%d:ip=%s,port=%d,state=%s,"
                     "offset=%lld,lag=%ld\r\n",

@@ -36,6 +36,7 @@
 #include <sys/types.h>
 #include <stdarg.h>
 
+// 带有: 头部描述的的字符串信息
 typedef char *sds;
 
 struct sdshdr {

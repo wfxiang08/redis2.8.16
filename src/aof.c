@@ -457,6 +457,7 @@ void feedAppendOnlyFile(struct redisCommand *cmd, int dictid, robj **argv, int a
 
     /* The DB this command was targeting is not the same as the last command
      * we appendend. To issue a SELECT command is needed. */
+    // 1. SELECTED DB变化了，则修改SELECTED DB
     if (dictid != server.aof_selected_db) {
         char seldb[64];
 

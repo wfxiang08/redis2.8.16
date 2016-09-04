@@ -973,9 +973,12 @@ void configGetCommand(redisClient *c) {
     config_get_numerical_field("tcp-backlog",server.tcp_backlog);
     config_get_numerical_field("databases",server.dbnum);
     config_get_numerical_field("repl-ping-slave-period",server.repl_ping_slave_period);
+    
     config_get_numerical_field("repl-timeout",server.repl_timeout);
     config_get_numerical_field("repl-backlog-size",server.repl_backlog_size);
     config_get_numerical_field("repl-backlog-ttl",server.repl_backlog_time_limit);
+    
+    
     config_get_numerical_field("maxclients",server.maxclients);
     config_get_numerical_field("watchdog-period",server.watchdog_period);
     config_get_numerical_field("slave-priority",server.slave_priority);
