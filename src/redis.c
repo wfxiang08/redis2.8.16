@@ -2755,11 +2755,9 @@ sds genRedisInfoString(char *section) {
                     lag = time(NULL) - slave->repl_ack_time;
 
                 // SLAVE确定的OFFSET
-                info = sdscatprintf(info,
-                    "slave%d:ip=%s,port=%d,state=%s,"
-                    "offset=%lld,lag=%ld\r\n",
-                    slaveid,ip,slave->slave_listening_port,state,
-                    slave->repl_ack_off, lag);
+                // 注意SLAVE的状态
+                info = sdscatprintf(info, "slave%d:ip=%s,port=%d,state=%s,""offset=%lld,lag=%ld\r\n", 
+                                    slaveid,ip,slave->slave_listening_port,state, slave->repl_ack_off, lag);
                 slaveid++;
             }
         }

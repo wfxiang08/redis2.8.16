@@ -180,9 +180,12 @@ void replicationFeedSlaves(list *slaves, int dictid, robj **argv, int argc) {
 
             dictid_len = ll2string(llstr,sizeof(llstr),dictid);
             selectcmd = createObject(REDIS_STRING,
-                sdscatprintf(sdsempty(),
-                "*2\r\n$6\r\nSELECT\r\n$%d\r\n%s\r\n",
-                dictid_len, llstr));
+                sdscatprintf(sdsempty(), "*2\r\n$6\r\nSELECT\r\n$%d\r\n%s\r\n", dictid_len, llstr));
+            // "*2\r\n$6\r\nSELECT\r\n$%d\r\n%s\r\n"
+            // 数组: 2
+            // SELECT 长度为 6
+            // llstr 长度和内容待定
+            
         }
 
         /* Add the SELECT command into the backlog. */
@@ -193,9 +196,11 @@ void replicationFeedSlaves(list *slaves, int dictid, robj **argv, int argc) {
         listRewind(slaves,&li);
         while((ln = listNext(&li))) {
             redisClient *slave = ln->value;
+            // 将SELECT COMMAND交给各个SLAVE
             addReply(slave,selectcmd);
         }
 
+        // 释放selectcmd
         if (dictid < 0 || dictid >= REDIS_SHARED_SELECT_CMDS)
             decrRefCount(selectcmd);
     }
@@ -384,6 +389,7 @@ int masterTryPartialResynchronization(redisClient *c) {
     // 注意这三个状态
     // server有repl_backlog
     // 并且: psync_offset在区间: [server.repl_backlog_off, server.repl_backlog_off + server.repl_backlog_histlen]内
+    // 如果没有: repl_backlog 似乎只能触发 full_resync
     if (!server.repl_backlog ||
         psync_offset < server.repl_backlog_off ||
         psync_offset > (server.repl_backlog_off + server.repl_backlog_histlen))
@@ -450,6 +456,7 @@ need_full_resync:
 // 参考: http://chenzhenianqing.cn/articles/956.html
 // MASTER接收处理PSYNC指令
 /* SYNC ad PSYNC command implemenation. */
+// Redis Server碰到: psync和sync之后执行的Command
 void syncCommand(redisClient *c) {
     /* ignore SYNC if already slave or in monitor mode */
     if (c->flags & REDIS_SLAVE) return;
@@ -560,6 +567,8 @@ void syncCommand(redisClient *c) {
     // psync更像是一个批处理操作，存在较大的时延
     //
     // 如何创建一个: createReplicationBacklog
+    // 非得有SLAVE，才可以创建: ReplicationBacklog
+    // TODO: 定制Redis中可以删除slaves的约束限制；并且拒绝释放Backlog
     if (listLength(server.slaves) == 1 && server.repl_backlog == NULL)
         createReplicationBacklog();
     return;
@@ -589,6 +598,7 @@ void replconfCommand(redisClient *c) {
 
     /* Process every option-value pair. */
     for (j = 1; j < c->argc; j+=2) {
+        // 告知slave的端口
         if (!strcasecmp(c->argv[j]->ptr,"listening-port")) {
             long port;
 
@@ -605,9 +615,14 @@ void replconfCommand(redisClient *c) {
             if (!(c->flags & REDIS_SLAVE)) return;
             if ((getLongLongFromObject(c->argv[j+1], &offset) != REDIS_OK))
                 return;
+            
             // 修改: repl_ack_off
+            //      这个有什么作用呢? 在服务器端 INFO 时可以看到 slave的状态
+            //      不会修改: server.repl_backlog_idx
+            //      也就是不管你Slave是死是活，是快是慢，server自己的管理 repl_backlog有自己的节奏，循环buffer不够了，就会覆盖之前的数据，从而调整: server.repl_backlog_idx
             if (offset > c->repl_ack_off)
                 c->repl_ack_off = offset;
+
             c->repl_ack_time = server.unixtime;
             /* Note: this command does not reply anything! */
             return;
